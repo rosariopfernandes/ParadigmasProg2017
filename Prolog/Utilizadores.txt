@@ -1,0 +1,25 @@
+1.
+'Rosário Pereira Fernandes'.
+'admin'.
+'admin'.
+'administrador'.
+2.
+'António Tembe'.
+'antonio'.
+'isctem'.
+'cozinheiro'.
+3.
+'joao'.
+'joao'.
+'isctem'.
+'cliente'.
+4.
+'bernardo'.
+'bernardo'.
+'isctem'.
+'cliente'.
+5.
+'malika'.
+'malika'.
+'isctem'.
+'cozinheiro'.
