@@ -99,6 +99,11 @@ resetAll:- forall(salgado(Id, IdEnc, NomeSalgado, Qtd, Piri, Frito, Total),
 			forall(user(Id, Nome, NomeUser, Senha, Tipo), retract(user(Id, Nome, NomeUser, Senha, Tipo))),
 			setLastSalgado(0), setLastEncomenda(0), setLastUser(0).
 
+lerNr(Variavel, Campo, Funcao):- if_then_else(
+			catch((read(Variavel), number(Variavel)), error(Err,_Context),
+				(write(Campo),write(' inexistente! Tente novamente: \n'), Funcao)), write(''),
+			(write(Campo),write(' inexistente! Tente novamente: \n'), Funcao)).
+
 ler(Variavel, Campo, Funcao):- if_then_else(
 			catch((read(Variavel), (atom(Variavel); number(Variavel))), error(Err,_Context),
 				(write(Campo),write(' inexistente! Tente novamente: \n'), Funcao)), write(''),
@@ -134,7 +139,7 @@ menu(Id):- write('++++++++++Menu+++++++++++\n'),
 			  write('5. Minha conta\n'),
 			  write('6. Sair\n'),
 			  write('+++++++++++++++++++++++++\n'), 
-			  ler(OP, 'Opção', menu(Id)),
+			  lerNr(OP, 'Opção', menu(Id)),
 			  user(Id,Nome,NomeU, Senha, Tipo),
 			  if_then_else(OP=1, novaEncomenda(Id),
 			  	if_then_else(OP=2, verEncomendas(Id, Nome),
@@ -154,14 +159,14 @@ escolherSalgado(IdEncomenda, Nome, Total):- write('Escolha os salgados: \n'),
 				  forall(salgado(Id, 0, NomeSal, Qtd, Piri, Frito, Preco), 
 				  (if_then_else(salgado(Id, IdEncomenda, N, Q,P,F,Pr), write(''),
 				   (write(Id), write('    '), write(NomeSal), write('    '), write(Preco), write('Mtn\n'))))),
-				   write('0    Terminar\n'), ler(SALG, 'Salgado', escolherSalgado(IdEncomenda, Nome, Total)),
+				   write('0    Terminar\n'), lerNr(SALG, 'Salgado', escolherSalgado(IdEncomenda, Nome, Total)),
 			  	  if_then_else(SALG=0, terminarEncomenda(IdEncomenda, Nome, Total),
 			  	  	if_then_else(salgado(SALG, 0, NomeSal, Qtd, Piri, Frito, Preco),
 			  	  				 novoSalgado(SALG,IdEncomenda,NomeSal, Nome,  Total),
 			  	 				print_invalid(escolherSalgado(IdEncomenda,Nome, Total))
 			  	  )).
 
-novoSalgado(ID, IdE, SALG, Nome, Total):- write('Quantas dúzias?\n'), ler(D, 'Quantidade', novoSalgado(ID, IdE, SALG, Nome, Total)),
+novoSalgado(ID, IdE, SALG, Nome, Total):- write('Quantas dúzias?\n'), lerNr(D, 'Quantidade', novoSalgado(ID, IdE, SALG, Nome, Total)),
 				write('Com piri-piri?(s/n)\n'), readSN(P, novoSalgado(ID, IdE, SALG, Nome, Total)),
 				write('Frito?(s/n)\n'), readSN(F, novoSalgado(ID, IdE, SALG, Nome, Total)),
 			  salgado(ID, 0, Salg, 0, '', '', Preco), write(Salg),
@@ -171,7 +176,7 @@ novoSalgado(ID, IdE, SALG, Nome, Total):- write('Quantas dúzias?\n'), ler(D, 'Q
 terminarEncomenda(IdEncomenda, Nome, Total):- if_then_else(salgado(Id, IdEncomenda, NomeSal, Qtd, Piri, Frito, Preco), 
 												(assertz(encomenda(IdEncomenda, Nome, Total,'Pendente')), 
 													write('\n Total a pagar: '), write(Total), write('Mtn.\n Valor Entregue(Mtn):'),
-													ler(Valor, 'Valor',terminarEncomenda(IdEncomenda, Nome, Total)),
+													lerNr(Valor, 'Valor',terminarEncomenda(IdEncomenda, Nome, Total)),
 													Troco is Valor-Total, write(' Troco: '), write(Troco), write('Mtn.'),
 													 write('\n\nEncomenda Efectuada!\n')),
 												write('Encomenda Cancelada!\n')).
@@ -189,7 +194,7 @@ print_salgado(X, Y, Z, V):- write(X), write(Y), write(Z), write(V).
 
 mostrarEncomendasCli(Nome):- forall(encomenda(Id, Nome, Total, Estado), print_encomenda(Id, Nome, Total, Estado)), 
 					write('\nIntroduza o Código de uma das encomendas para selecioná-la ou 0 para voltar.\n'), 
-					ler(OpEncomenda, 'Encomenda',mostrarEncomendasCli(Nome)),
+					lerNr(OpEncomenda, 'Encomenda',mostrarEncomendasCli(Nome)),
 					if_then_else(OpEncomenda=0, write(''), selectEncomenda(OpEncomenda)).
 
 selectEncomenda(Id):- if_then_else(encomenda(Id, Nome, Total, Estado), detalhesEncomenda(Id), 
@@ -204,7 +209,7 @@ detalhesEncomenda(IdEnc):- encomenda(IdEnc, Nome, Total, Estado), write('Cliente
 						printSalgadoByEnc(IdEnc), write('          Total: '), write(Total), write('Mtn\n'),
 						write('\n\n1. Levantar Encomenda\n'),write('2. Alterar Encomenda\n'),
 						write('3. Cancelar Encomenda\n'),write('0. Voltar\n'), 
-						ler(OpEnc, 'Opção',detalhesEncomenda(IdEnc)),
+						lerNr(OpEnc, 'Opção',detalhesEncomenda(IdEnc)),
 						if_then_else(OpEnc=1, (alterarEstado(IdEnc, 'Levantada'), detalhesEncomenda(IdEnc)), 
 							if_then_else(OpEnc=2, alterarEncomenda(IdEnc),
 								if_then_else(OpEnc=3, (alterarEstado(IdEnc, 'Cancelada'), detalhesEncomenda(IdEnc)),
@@ -216,21 +221,21 @@ print_encomenda(Id, NomeCli, Total, Estado):- write(Id),write('    '), write(Nom
 											 write(Total),write('Mtn    '), write(Estado), write('\n').
 
 alterarEncomenda(IdEnc):- printSalgadoByEnc(IdEnc), write('Introduza o ID de um dos salgados para selecioná-lo ou 0 para voltar.\n'),
-							ler(IdSal,'Salgado',alterarEncomenda(IdEnc)), 
+							lerNr(IdSal,'Salgado',alterarEncomenda(IdEnc)), 
 							if_then_else(IdSal=0, detalhesEncomenda(IdEnc), selectEncSal(IdEnc, IdSal)).
 
 selectEncSal(IdEnc, IdSal):- if_then_else(salgado(IdSal, IdEnc, NomeSal, Qtd, Piri, Frito, Preco),
 						(write(IdSal), write(' '), write(NomeSal), write(' '), write(Frito), write(' '),
 									write(Piri), write(' '), write(Qtd), write(' '), write(Preco), write('Mtn\n'),
 						write('1. Alterar\n'), write('2. Remover\n'), write('0. Voltar\n'), 
-							ler(Op, 'Opção',selectEncSal(IdEnc, IdSal)),
+							lerNr(Op, 'Opção',selectEncSal(IdEnc, IdSal)),
 							if_then_else(Op=1, alterarEncSal(IdEnc, IdSal), 
 								if_then_else(Op=2, removerEncSal(IdEnc, IdSal), 
 									if_then_else(Op=0, alterarEncomenda(IdEnc), print_invalid(selectEncSal(IdEnc, IdSal)))))),
 						print_then_run('Não foi encontrado nenhum salgado com este ID.\n', alterarEncomenda(IdEnc))).
 
 alterarEncSal(IdEnc, IdSal):- salgado(IdSal, IdEnc, NomeSal, Qtd, Piri, Frito, Preco), 
-						write('Quantidade ('), write(Qtd), write('): '), ler(QtdN, 'Quantidade', alterarEncSal(IdEnc, IdSal)), 
+						write('Quantidade ('), write(Qtd), write('): '), lerNr(QtdN, 'Quantidade', alterarEncSal(IdEnc, IdSal)), 
 						write('Piri ('), write(Piri), write('): '), readSN(PiriN,alterarEncSal(IdEnc, IdSal)),
 						write('Frito ('), write(Frito), write('): '), readSN(FritoN, alterarEncSal(IdEnc, IdSal)),
 						retract(salgado(IdSal, IdEnc, NomeSal, Qtd, Piri, Frito, Preco)),
@@ -397,7 +402,7 @@ menuCozinheiro(Id):- write('++++++++++Menu+++++++++++\n'),
 			  write('3. Minha conta\n'),
 			  write('4. Sair\n'),
 			  write('+++++++++++++++++++++++++\n'),
-			  ler(OP, 'Opção', menuCozinheiro(Id)),
+			  lerNr(OP, 'Opção', menuCozinheiro(Id)),
 			  if_then_else(OP=1, verEncomendasCoz(Id),
 			  	 	if_then_else(OP=2, sobreProg(Id),
 			  	 		if_then_else(OP=3, minhaConta(Id),
@@ -413,7 +418,7 @@ print_salgado(X, Y, Z, V):- write(X), write(Y), write(Z), write(V).
 
 mostrarEncomendas(Estado):- forall(encomenda(Id, Nome, Total, Estado), print_encomenda(Id, Nome, Total, Estado)), 
 					write('\nIntroduza o Código de uma das encomendas para selecioná-la ou 0 para voltar.\n'), 
-					ler(OpEncomenda, 'Opção', mostrarEncomendas(Estado)),
+					lerNr(OpEncomenda, 'Opção', mostrarEncomendas(Estado)),
 					if_then_else(OpEncomenda=0, write(''), selectEncomenda(OpEncomenda)).
 
 selectEncomendaCoz(Id):- if_then_else(encomenda(Id, Nome, Total, Estado), detalhesEncomendaCoz(Id), 
@@ -430,7 +435,7 @@ detalhesEncomendaCoz(IdEnc):- encomenda(IdEnc, Nome, Total, Estado), write('Clie
 mostrarEncomendasCoz:- forall(encomenda(Id, Nome, Total, Estado),
 						if_then_else((Estado = 'Pendente' ; Estado = 'Pronta'), print_encomenda(Id, Nome, Total, Estado), write(''))),
 						write('\nIntroduza o Código de uma das encomendas para selecioná-la ou 0 para voltar.\n'), 
-						ler(OpEncomenda, 'Código', mostrarEncomendasCoz),
+						lerNr(OpEncomenda, 'Código', mostrarEncomendasCoz),
 						if_then_else(OpEncomenda=0, write(''), selectEncomendaCoz(OpEncomenda)).
 
 %Administrador
@@ -445,7 +450,7 @@ menuAdmin(Id):- write('++++++++++Menu+++++++++++\n'),
 			  write('8. Minha conta\n'),
 			  write('9. Sair\n'),
 			  write('+++++++++++++++++++++++++\n'),
-			  ler(OP, 'Opcao', menuAdmin(Id)),
+			  lerNr(OP, 'Opcao', menuAdmin(Id)),
 			  if_then_else(OP=1, insertSalgado(Id),
 			  	if_then_else(OP=2, readSalgados(Id),
 			  		if_then_else(OP=3, novaEncomenda(Id),
@@ -460,13 +465,13 @@ menuAdmin(Id):- write('++++++++++Menu+++++++++++\n'),
 
 insertSalgado(IdU):- incrementSalgado, cont_salgado(ID), write('Nome do Salgado:'), 
 				ler(NomeNovoSal, 'Nome', insertSalgado(IdU)), write('Preço:'),
-				ler(Preco, 'Preço',insertSalgado(IdU)), assertz(salgado(ID, 0, NomeNovoSal, 0, '', '', Preco)), 
+				lerNr(Preco, 'Preço',insertSalgado(IdU)), assertz(salgado(ID, 0, NomeNovoSal, 0, '', '', Preco)), 
 				write('Salgado adicionado com sucesso!\n'), menuAdmin(IdU).
 
 readSalgados(IdU):- write('Salgados disponíveis \n'),forall(salgado(Id, 0, NomeSal, 0, '', '', Preco), 
 					(write(Id), write('    '), write(NomeSal), write('    '), write(Preco), write('Mtn\n'))),
 					write('Introduza o ID de um dos salgados para selecioná-lo ou 0 para voltar.\n'), 
-					ler(Sal, 'ID', readSalgados(IdU)),
+					lerNr(Sal, 'ID', readSalgados(IdU)),
 					if_then_else(Sal=0, menuAdmin(IdU), selectSalgado(Sal, IdU)).
 
 selectSalgado(Id, IdU):- if_then_else(salgado(Id, 0, NomeSal, 0, '', '', Preco),
@@ -474,7 +479,7 @@ selectSalgado(Id, IdU):- if_then_else(salgado(Id, 0, NomeSal, 0, '', '', Preco),
 						print_then_run('Não foi encontrado nenhum salgado com este ID.\n', readSalgados(IdU))).
 
 menuSalgados(Id, IdU):- write('\n1. Alterar o nome\n'), write('2. Alterar o preço\n'), write('3. Eliminar\n'), write('0. Voltar\n'),
-					ler(Op, 'Opção',menuSalgados(Id, IdU)), if_then_else(Op=1, alterarNomeSal(Id, IdU), 
+					lerNr(Op, 'Opção',menuSalgados(Id, IdU)), if_then_else(Op=1, alterarNomeSal(Id, IdU), 
 								if_then_else(Op=2, alterarPrecoSal(Id, IdU),
 									if_then_else(Op=3, removerSal(Id, IdU),
 										if_then_else(Op=0, write(''),
@@ -520,7 +525,7 @@ adicionarUser(IdU):- write('Introduza o nome real do novo utilizador:'), ler(Nom
 
 verUsers(IdU):- forall(user(Id, Nome, NomeU, Senha, Tipo), print_user(Id)), 
 				write('\nIntroduza o Código de um dos utilizadores para selecioná-lo ou 0 para voltar.\n'), 
-				ler(UserEsc, 'Código',verUsers(IdU)),
+				lerNr(UserEsc, 'Código',verUsers(IdU)),
 				if_then_else(UserEsc=0, write(''), selectUser(UserEsc, IdU)).
 
 print_user(Id):- user(Id, Nome, NomeU, Senha, Tipo), write(Id), write('   '), write(Nome), write('   '), write(NomeU), write('   '),
@@ -534,14 +539,14 @@ detalhesUser(Id):- user(Id, Nome, NomeU, Senha, Tipo), write(Tipo), write('\n'),
 						write('Nome de utilizador: '), write(NomeU),
 						write('\n\n1. Alterar o nome\n'),write('2. Repor Senha \n'),
 						write('0. Voltar\n'), 
-						ler(Op, 'Opção', detalhesUser(Id)),
+						lerNr(Op, 'Opção', detalhesUser(Id)),
 						if_then_else(Op=1, alterarNome(Id), 
 							if_then_else(Op=2, resetPassword(Id),
 									if_then_else(Op=0, write(''), 
 										print_invalid(detalhesUser(Id))))).
 
 alterarNome(Id):- write('Introduza o novo nome: '), 
-				  ler(NovoNome, 'Nome',alterarNome(Id)), retract(user(Id, Nome, NomeU, Senha, Tipo)),
+				  lerNr(NovoNome, 'Nome',alterarNome(Id)), retract(user(Id, Nome, NomeU, Senha, Tipo)),
 				  assertz(user(Id, NovoNome, NomeU, Senha, Tipo)), write('Nome alterado com sucesso!\n'), detalhesUser(Id).
 
 resetPassword(Id):- write('Tem a certeza que pretende repor a senha deste utilizador?(s/n)'),
